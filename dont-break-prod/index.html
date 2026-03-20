@@ -1,0 +1,1718 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Don't Break Prod — PR Best Practices for Designers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ==========================================================================
+       TEST SÖHNE — @font-face
+       ========================================================================== */
+      @font-face {
+        font-family: "Test Soehne";
+        src: url("fonts/test-soehne-buch.woff2")
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Test Soehne";
+        src: url("fonts/test-soehne-kraftig.woff2")
+          format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      /* DEPARTURE MONO */
+      @font-face {
+        font-family: "Departure Mono";
+        src: url("DepartureMono-1.500/DepartureMono-Regular.woff2")
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      /* ==========================================================================
+       TOKENS
+       ========================================================================== */
+      :root {
+        --cream: #fcfcfc;
+        --navy: #242526;
+        --coral: #e14d3f;
+        --navy-10: rgba(13, 27, 42, 0.1);
+        --navy-15: rgba(13, 27, 42, 0.15);
+        --navy-30: rgba(13, 27, 42, 0.3);
+        --navy-45: rgba(66, 70, 74, 0.656);
+        --navy-65: rgba(13, 27, 42, 0.65);
+        --cream-50: rgba(250, 247, 242, 0.5);
+        --cream-20: rgba(250, 247, 242, 0.2);
+        --cream-15: rgba(250, 247, 242, 0.15);
+        --cream-45: rgba(250, 247, 242, 0.45);
+
+        /* Typography scale */
+        --fs-hed-xl: clamp(64px, 9vw, 140px);
+        --fs-hed-lg: clamp(48px, 7vw, 110px);
+        --fs-section: clamp(2.1rem, 3.6vw, 3.1rem);
+        --fs-body: clamp(1.5rem, 2.2vw, 1.9rem);
+        --fs-body-sm: clamp(0.9rem, 1.5vw, 1.2rem);
+        --fs-label: clamp(0.75rem, 1vw, 0.9rem);
+        --fs-code: clamp(0.9rem, 1.4vw, 1.2rem);
+        --fs-chip: clamp(9px, 0.65vw, 10px);
+        --fs-subtitle: clamp(13px, 1.1vw, 17px);
+        --fs-punchy: clamp(16px, 1.5vw, 22px);
+
+        /* Spacing */
+        --pad-slide: clamp(40px, 5vw, 72px);
+        --pad-slide-x: clamp(44px, 5.5vw, 80px);
+        --pad-left: clamp(28px, 3vw, 44px);
+        --pad-left-y: clamp(32px, 4vh, 56px);
+
+        /* Left block width */
+        --left-w: clamp(220px, 28vw, 400px);
+        --left-narrow: clamp(60px, 8vw, 100px);
+
+        /* Slide total */
+        --total-slides: 16;
+      }
+
+      /* ==========================================================================
+       RESET & BASE
+       ========================================================================== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        width: 100%;
+        background: var(--cream);
+        font-family: "Test Soehne", sans-serif;
+        color: var(--navy);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      a {
+        color: var(--coral);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color 0.2s ease;
+      }
+
+      a:hover {
+        color: var(--navy);
+      }
+
+      /* ==========================================================================
+       PROGRESS BAR
+       ========================================================================== */
+      #progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: var(--coral);
+        z-index: 1000;
+        transition: width 0.3s ease;
+      }
+
+      /* ==========================================================================
+       NAV DOTS
+       ========================================================================== */
+      #nav-dots {
+        position: fixed;
+        right: clamp(12px, 1.5vw, 20px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 14px;
+        z-index: 1000;
+      }
+
+      .nav-dot {
+        width: 14px;
+        height: 1.5px;
+        border-radius: 0;
+        background: var(--navy-15);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition:
+          background 0.3s ease-in-out,
+          width 0.3s ease-in-out,
+          height 0.3s ease-in-out;
+      }
+
+      .nav-dot:hover {
+        width: 22px;
+        background: var(--navy-30);
+      }
+
+      .nav-dot.active {
+        background: var(--coral);
+        width: 18px;
+        height: 3px;
+      }
+
+      .nav-dot.active:hover {
+        width: 24px;
+        background: var(--coral);
+      }
+
+      /* ==========================================================================
+       NAV ARROWS
+       ========================================================================== */
+      .nav-arrow {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px);
+        color: var(--navy-30);
+        padding: 2px 4px;
+        transition:
+          transform 0.2s ease,
+          color 0.2s ease;
+      }
+
+      .nav-arrow:hover {
+        transform: translateY(-2px);
+        color: var(--navy-45);
+      }
+
+      .nav-arrow:active {
+        transform: translateY(1px);
+      }
+
+      /* ==========================================================================
+       SLIDE COUNTER
+       ========================================================================== */
+      #slide-counter {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px);
+        font-weight: 500;
+        color: var(--navy-30);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* ==========================================================================
+       SLIDE BASE
+       ========================================================================== */
+      .slide {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        position: relative;
+        background: var(--cream);
+      }
+
+      /* ==========================================================================
+       FULL SPLIT LAYOUT (Title / Big Statement slides)
+       ========================================================================== */
+      .slide--split {
+        display: grid;
+        grid-template-columns: var(--left-w) 1fr;
+        font-family: "Test Soehne", sans-serif;
+      }
+
+      /* Left color block */
+      .left-block {
+        background: var(--navy);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: var(--pad-left-y) var(--pad-left);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Diagonal stripe texture */
+      .left-block::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.015) 0px,
+          rgba(255, 255, 255, 0.015) 1px,
+          transparent 1px,
+          transparent 12px
+        );
+        pointer-events: none;
+      }
+
+      /* Coral angled cutout */
+      .left-block::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: clamp(180px, 28vh, 300px);
+        background: var(--coral);
+        clip-path: polygon(0 40%, 100% 0%, 100% 100%, 0% 100%);
+        z-index: 0;
+      }
+
+      .left-top {
+        position: relative;
+        z-index: 1;
+      }
+
+      .left-rule {
+        width: clamp(24px, 3vw, 40px);
+        height: 3px;
+        background: var(--coral);
+        margin-bottom: 14px;
+      }
+
+      .left-label {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.85vw, 13px);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--cream-50);
+        line-height: 1.6;
+      }
+
+      .left-label strong {
+        display: block;
+        color: var(--cream);
+        font-size: clamp(13px, 1vw, 15px);
+      }
+
+      .vertical-word {
+        position: absolute;
+        right: clamp(16px, 2vw, 28px);
+        top: 50%;
+        transform: translateY(-50%) rotate(180deg);
+        writing-mode: vertical-rl;
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(9px, 0.7vw, 11px);
+        font-weight: 700;
+        letter-spacing: 0.25em;
+        text-transform: none;
+        color: var(--cream-20);
+        z-index: 1;
+      }
+
+      .left-bottom {
+        position: relative;
+        z-index: 1;
+      }
+
+      .year-stamp {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(48px, 6vw, 88px);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        color: var(--cream-15);
+        line-height: 1;
+      }
+
+      .org-tag {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(10px, 0.75vw, 12px);
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--cream-45);
+        margin-top: 6px;
+      }
+
+      /* Right panel */
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: var(--pad-slide) var(--pad-slide-x);
+        position: relative;
+      }
+
+      .right-header {
+        position: absolute;
+        top: clamp(28px, 3.5vh, 44px);
+        left: var(--pad-slide-x);
+        right: var(--pad-slide-x);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .chip {
+        font-family: "Departure Mono", monospace;
+        font-size: var(--fs-chip);
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--navy-45);
+      }
+
+      .chip-accent {
+        color: var(--coral);
+        font-weight: 700;
+      }
+
+      /* Headline cascade */
+      .headline-block {
+        overflow: hidden;
+      }
+
+      .hed-line {
+        display: block;
+        font-family: "Test Soehne", sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 0.9;
+        text-transform: none;
+        color: var(--navy);
+      }
+
+      .hed-line .pop {
+        color: var(--coral);
+      }
+
+      .hed-line--xl {
+        font-size: var(--fs-hed-xl);
+      }
+      .hed-line--lg {
+        font-size: var(--fs-hed-lg);
+      }
+
+      /* Animate on visible */
+      .anim-cascade .hed-line {
+        transform: translateY(110%);
+        opacity: 0;
+        transition:
+          transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .anim-cascade.is-visible .hed-line:nth-child(1) {
+        transform: translateY(0);
+        opacity: 1;
+        transition-delay: 0.15s;
+      }
+      .anim-cascade.is-visible .hed-line:nth-child(2) {
+        transform: translateY(0);
+        opacity: 1;
+        transition-delay: 0.28s;
+      }
+      .anim-cascade.is-visible .hed-line:nth-child(3) {
+        transform: translateY(0);
+        opacity: 1;
+        transition-delay: 0.41s;
+      }
+
+      /* Slide-in for left blocks */
+      .anim-slide-left {
+        transform: translateX(-100%);
+        transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .anim-slide-left.is-visible {
+        transform: translateX(0);
+      }
+
+      /* Fade up stagger for content */
+      .anim-fade-up {
+        opacity: 0;
+        transform: translateY(16px);
+        transition:
+          opacity 0.5s ease,
+          transform 0.5s ease;
+      }
+      .anim-fade-up.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .stagger-1 {
+        transition-delay: 0.1s;
+      }
+      .stagger-2 {
+        transition-delay: 0.2s;
+      }
+      .stagger-3 {
+        transition-delay: 0.3s;
+      }
+      .stagger-4 {
+        transition-delay: 0.4s;
+      }
+      .stagger-5 {
+        transition-delay: 0.5s;
+      }
+      .stagger-6 {
+        transition-delay: 0.6s;
+      }
+      .stagger-7 {
+        transition-delay: 0.7s;
+      }
+      .stagger-8 {
+        transition-delay: 0.8s;
+      }
+
+      /* Image fade-scale */
+      .anim-img {
+        opacity: 0;
+        transform: scale(0.97);
+        transition:
+          opacity 0.55s ease,
+          transform 0.55s ease;
+      }
+      .anim-img.is-visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      /* Rule expand */
+      .rule-thin {
+        width: 100%;
+        height: 1.5px;
+        background: var(--navy);
+        margin: clamp(16px, 2.5vh, 28px) 0;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.55s ease;
+      }
+      .rule-thin.is-visible {
+        transform: scaleX(1);
+      }
+
+      .subtitle-row {
+        display: flex;
+        align-items: baseline;
+        gap: clamp(16px, 2vw, 28px);
+      }
+
+      .subtitle {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-subtitle);
+        font-weight: 400;
+        color: var(--navy-65);
+        line-height: 1.45;
+        flex: 1;
+      }
+
+      .subtitle strong {
+        color: var(--navy);
+        font-weight: 700;
+      }
+
+      .punchy-block {
+        margin-top: clamp(24px, 3vh, 36px);
+      }
+
+      .punchy-wrap {
+        display: inline-flex;
+        position: relative;
+        padding-left: 14px;
+      }
+
+      .punchy-rule {
+        width: 3px;
+        height: 100%;
+        background: var(--coral);
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      .punchy-text {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-punchy);
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        color: var(--navy);
+      }
+
+      .right-footer {
+        position: absolute;
+        bottom: clamp(28px, 3.5vh, 44px);
+        left: var(--pad-slide-x);
+        right: var(--pad-slide-x);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .footer-note {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px);
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--navy-30);
+      }
+
+      .stamp {
+        width: clamp(52px, 5vw, 72px);
+        height: clamp(52px, 5vw, 72px);
+        border-radius: 50%;
+        border: 2px solid var(--navy-15);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+      }
+
+      .stamp-top {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(7px, 0.55vw, 9px);
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: none;
+        color: rgba(13, 27, 42, 0.35);
+      }
+
+      .stamp-main {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(11px, 0.9vw, 14px);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        text-transform: none;
+        color: var(--navy);
+      }
+
+      /* ==========================================================================
+       CONTENT SLIDE LAYOUT (narrow accent bar)
+       ========================================================================== */
+      .slide--content {
+        display: grid;
+        grid-template-columns: var(--left-narrow) 1fr;
+      }
+
+      .accent-bar {
+        background: var(--navy);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .accent-bar::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.015) 0px,
+          rgba(255, 255, 255, 0.015) 1px,
+          transparent 1px,
+          transparent 12px
+        );
+        pointer-events: none;
+      }
+
+      .accent-bar::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: clamp(80px, 14vh, 140px);
+        background: var(--coral);
+        clip-path: polygon(0 40%, 100% 0%, 100% 100%, 0% 100%);
+      }
+
+      .content-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(60px, 8vh, 100px) clamp(48px, 6vw, 96px);
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow: hidden;
+      }
+
+      .content-heading {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-section);
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: -0.01em;
+        color: var(--navy);
+        margin-bottom: clamp(16px, 2.5vh, 32px);
+      }
+
+      .content-heading .coral {
+        color: var(--coral);
+      }
+
+      .content-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(12px, 2vh, 20px);
+      }
+
+      .content-list li {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body);
+        font-weight: 400;
+        color: var(--navy);
+        line-height: 1.45;
+        padding-left: clamp(16px, 2vw, 24px);
+        position: relative;
+      }
+
+      .content-list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.65em;
+        width: 6px;
+        height: 6px;
+        background: var(--coral);
+        border-radius: 1px;
+      }
+
+      .content-list li .sub {
+        display: block;
+        font-size: var(--fs-body-sm);
+        color: var(--navy-65);
+        margin-top: 4px;
+      }
+
+      /* ==========================================================================
+       SCREENSHOT SLIDE
+       ========================================================================== */
+      .slide--screenshot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(40px, 5vh, 80px) clamp(40px, 6vw, 100px);
+      }
+
+      .screenshot-label {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        color: var(--navy);
+        margin-bottom: clamp(16px, 2vh, 28px);
+        text-align: center;
+      }
+
+      .screenshot-label .coral {
+        color: var(--coral);
+      }
+
+      .screenshot-wrap {
+        max-height: 60vh;
+        width: auto;
+        max-width: 90%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .screenshot-wrap img {
+        max-height: 60vh;
+        max-width: 100%;
+        width: auto;
+        object-fit: contain;
+        border-radius: clamp(6px, 0.5vw, 10px);
+        box-shadow:
+          0 4px 24px rgba(13, 27, 42, 0.12),
+          0 1px 4px rgba(13, 27, 42, 0.06);
+      }
+
+      .screenshot-caption {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm);
+        font-weight: 400;
+        color: var(--navy-65);
+        margin-top: clamp(12px, 2vh, 24px);
+        text-align: center;
+        max-width: 700px;
+        line-height: 1.45;
+      }
+
+      /* ==========================================================================
+       TWO-COLUMN SCREENSHOT SLIDE
+       ========================================================================== */
+      .slide--two-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(40px, 5vh, 80px) clamp(32px, 4vw, 80px);
+      }
+
+      .two-col-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(20px, 3vw, 48px);
+        width: 100%;
+        max-width: 1200px;
+      }
+
+      .two-col-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .col-label {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1rem, 1.6vw, 1.3rem);
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0.04em;
+        margin-bottom: clamp(10px, 1.5vh, 18px);
+        text-align: center;
+      }
+
+      .col-label--bad {
+        color: #c0392b;
+      }
+      .col-label--good {
+        color: #27ae60;
+      }
+
+      .two-col-item img {
+        height: 25vh;
+        width: 100%;
+        object-fit: cover;
+        object-position: top left;
+        border-radius: clamp(6px, 0.5vw, 10px);
+        box-shadow:
+          0 4px 24px rgba(13, 27, 42, 0.12),
+          0 1px 4px rgba(13, 27, 42, 0.06);
+      }
+
+      .two-col-caption {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm);
+        font-weight: 400;
+        color: var(--navy-65);
+        margin-top: clamp(16px, 2.5vh, 28px);
+        text-align: center;
+        max-width: 800px;
+        line-height: 1.45;
+      }
+
+      /* ==========================================================================
+       BIG STATEMENT SLIDE (full split, giant type on right)
+       ========================================================================== */
+      .statement-text {
+        font-family: "Test Soehne", sans-serif;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: -0.02em;
+        line-height: 0.92;
+        color: var(--navy);
+      }
+
+      .statement-sub {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body);
+        font-weight: 400;
+        color: var(--navy-65);
+        line-height: 1.5;
+        margin-top: clamp(16px, 2.5vh, 28px);
+        max-width: 550px;
+      }
+
+      .badge-orange {
+        display: inline-block;
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-label);
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0.1em;
+        color: var(--cream);
+        background: var(--coral);
+        padding: clamp(4px, 0.5vh, 6px) clamp(10px, 1vw, 16px);
+        border-radius: 3px;
+        margin-top: clamp(12px, 1.5vh, 20px);
+      }
+
+      .left-block-label {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.85vw, 13px);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--cream-50);
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ==========================================================================
+       RESOURCE CARDS
+       ========================================================================== */
+      .resource-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(12px, 1.5vw, 20px);
+        max-width: 900px;
+      }
+
+      .resource-card {
+        border: 2px solid var(--navy-15);
+        border-radius: clamp(6px, 0.5vw, 10px);
+        padding: clamp(14px, 2vh, 22px) clamp(14px, 1.5vw, 20px);
+        background: var(--cream);
+      }
+
+      .resource-card strong {
+        display: block;
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1rem, 1.4vw, 1.2rem);
+        font-weight: 700;
+        color: var(--navy);
+        text-transform: none;
+        letter-spacing: 0.02em;
+        margin-bottom: 4px;
+      }
+
+      .resource-card span {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm);
+        font-weight: 400;
+        color: var(--navy-65);
+        line-height: 1.4;
+      }
+
+      /* ==========================================================================
+       CLOSING SLIDE
+       ========================================================================== */
+      .closing-text {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1.1rem, 2vw, 1.6rem);
+        font-weight: 700;
+        color: var(--navy);
+        line-height: 1.55;
+        max-width: 520px;
+      }
+
+      .closing-footer {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-label);
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: none;
+        color: var(--navy-45);
+        margin-top: clamp(24px, 3vh, 40px);
+      }
+
+      /* ==========================================================================
+       QUOTE SLIDE
+       ========================================================================== */
+      .quote-mark {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(80px, 12vw, 180px);
+        font-weight: 700;
+        line-height: 0.6;
+        color: var(--coral);
+        opacity: 0.25;
+        position: absolute;
+        top: clamp(40px, 5vh, 72px);
+        left: var(--pad-slide-x);
+        user-select: none;
+        pointer-events: none;
+      }
+
+      .quote-text {
+        font-family: "Test Soehne", sans-serif;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        color: var(--navy);
+        max-width: 680px;
+      }
+
+      .quote-text .coral {
+        color: var(--coral);
+      }
+
+      .quote-attr {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm);
+        font-weight: 700;
+        color: var(--navy-45);
+        margin-top: clamp(20px, 3vh, 36px);
+        letter-spacing: 0.04em;
+        text-transform: none;
+      }
+
+      /* Closing slide: coral accent on left block */
+      .left-block--coral::after {
+        height: clamp(260px, 45vh, 500px);
+      }
+
+      /* ==========================================================================
+       REDUCED MOTION
+       ========================================================================== */
+      @media (prefers-reduced-motion: reduce) {
+        .anim-cascade .hed-line,
+        .anim-fade-up,
+        .anim-slide-left,
+        .anim-img {
+          transform: none !important;
+          transition: opacity 0.3s ease !important;
+        }
+
+        .anim-cascade .hed-line {
+          opacity: 0;
+        }
+        .anim-cascade.is-visible .hed-line {
+          opacity: 1;
+        }
+
+        .rule-thin {
+          transform: scaleX(1) !important;
+          transition: opacity 0.3s ease !important;
+          opacity: 0;
+        }
+        .rule-thin.is-visible {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Progress Bar -->
+    <div id="progress-bar" role="presentation"></div>
+
+    <!-- Nav Dots -->
+    <nav id="nav-dots" aria-label="Slide navigation"></nav>
+
+    <!-- Slide Counter -->
+    <div
+      id="slide-nav"
+      style="
+        position: fixed;
+        bottom: clamp(16px, 2vh, 28px);
+        right: clamp(16px, 2vw, 28px);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      "
+    >
+      <button id="nav-up" class="nav-arrow" aria-label="Previous slide">
+        &#9650;
+      </button>
+      <div id="slide-counter" aria-live="polite">1 / 16</div>
+      <button id="nav-down" class="nav-arrow" aria-label="Next slide">
+        &#9660;
+      </button>
+    </div>
+
+    <main>
+      <!-- ====================================================================
+         SLIDE 1 — TITLE
+         ==================================================================== -->
+      <section
+        class="slide"
+        data-slide="1"
+        style="
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: var(--pad-slide) clamp(80px, 10vw, 180px);
+          position: relative;
+          font-family: &quot;Test Soehne&quot;, sans-serif;
+        "
+      >
+        <div class="anim-cascade">
+          <div class="headline-block" style="padding-bottom: 0.95em">
+            <span
+              class="hed-line"
+              style="
+                font-family: &quot;Test Soehne&quot;, sans-serif;
+                font-weight: 700;
+                text-transform: none;
+                font-size: clamp(56px, 8.4vw, 132px);
+                margin-left: -0.04em;
+              "
+              >Don't break <span class="pop">prod</span></span
+            >
+          </div>
+        </div>
+        <div class="punchy-block anim-fade-up stagger-7">
+          <span
+            style="
+              font-family: &quot;Departure Mono&quot;, monospace;
+              font-size: clamp(14px, 1.6vw, 20px);
+              font-weight: 500;
+              letter-spacing: 0.14em;
+              text-transform: uppercase;
+              color: var(--navy-45);
+              line-height: 1.7;
+              max-width: 550px;
+              display: inline-block;
+            "
+            >PR Best Practices for Designers Shipping AI-Generated Code</span
+          >
+        </div>
+        <div
+          style="
+            position: absolute;
+            bottom: clamp(28px, 3.5vh, 44px);
+            left: clamp(80px, 10vw, 180px);
+            right: clamp(80px, 10vw, 180px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+          class="anim-fade-up stagger-8"
+        >
+          <span
+            class="footer-note"
+            style="font-family: &quot;Departure Mono&quot;, monospace"
+            >Databricks Design &middot; 2026</span
+          >
+          <!-- <div class="stamp">
+              <span class="stamp-top">Talk</span>
+              <span class="stamp-main">01</span>
+            </div> -->
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 2 — WHY THIS MATTERS
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="2">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Why this <span class="coral">matters</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              Shipping code is real leverage and responsibility.
+            </li>
+            <li class="anim-fade-up stagger-3">
+              AI lowered the barrier to push PRs. That doesn't mean we lower the
+              quality bar.
+            </li>
+            <li class="anim-fade-up stagger-4">
+              Eng teams are going to notice how we show up in this workflow.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 3 — PRE-PR CONVERSATION
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="3">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Build engineering<span class="coral"> partnerships</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              Give engineers a heads up before you start
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Before writing or prompting, align on approach
+            </li>
+            <li class="anim-fade-up stagger-5">
+              Reviewers are much more generous when they're not surprised
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 4 — ONE PR = ONE THING (big statement)
+         ==================================================================== -->
+      <section
+        class="slide"
+        data-slide="4"
+        style="
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: var(--pad-slide) clamp(80px, 10vw, 180px);
+          position: relative;
+        "
+      >
+        <div class="anim-cascade" style="position: relative; z-index: 1">
+          <div class="headline-block">
+            <span class="hed-line hed-line--xl">One PR</span>
+          </div>
+          <div class="headline-block" style="padding-bottom: 0.95em">
+            <span class="hed-line hed-line--xl"
+              ><span class="pop">One change</span></span
+            >
+          </div>
+        </div>
+        <div
+          class="statement-sub anim-fade-up stagger-5"
+          style="position: relative; z-index: 1"
+        >
+          If you can't describe it in one sentence break it up. Think smallest
+          possible chunks to make it easier to review.
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 5 — PR SIZE
+         ==================================================================== -->
+      <section
+        class="slide slide--content"
+        data-slide="5"
+        style="position: relative"
+      >
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel" style="position: relative">
+          <img
+            class="anim-img"
+            src="./images/pullrequest.jpg"
+            alt="PR meme - 326 files changed"
+            style="
+              transition-delay: 1.2s;
+              position: absolute;
+              top: 50%;
+              left: clamp(625px, 57vw, 925px);
+              transform: translateY(-50%);
+              max-height: min(58vh, 500px);
+              border-radius: clamp(6px, 0.5vw, 10px);
+              z-index: 0;
+            "
+          />
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Keep it <span class="coral">small</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              Target ~500 lines <b>maximum</b> (<a
+                href="https://databricks.atlassian.net/wiki/spaces/KB/pages/2497970395/Use+Small+PRs+go+smallpr"
+                target="_blank"
+                rel="noopener"
+                >go/smallpr</a
+              >)
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Reviewer effort scales quadratically with PR size
+            </li>
+            <li class="anim-fade-up stagger-4">
+              50-line PR: reviewed before the next meeting
+            </li>
+            <li class="anim-fade-up stagger-5">
+              500-line PR: goes on the todo list. Eventually.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 6 — REVIEW YOUR OWN DIFF (big statement)
+         ==================================================================== -->
+      <section
+        class="slide"
+        data-slide="6"
+        style="
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: var(--pad-slide) clamp(80px, 10vw, 180px);
+          position: relative;
+        "
+      >
+        <div class="anim-cascade">
+          <div class="headline-block">
+            <span class="hed-line hed-line--lg">You are the</span>
+          </div>
+          <div class="headline-block" style="padding-bottom: 0.95em">
+            <span class="hed-line hed-line--lg"
+              ><span class="pop">first line of QA</span></span
+            >
+          </div>
+        </div>
+        <div class="statement-sub anim-fade-up stagger-5">
+          Review your own PR preview and spot the obvious issues before putting
+          them in front of someone else.
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 7 — WRITING YOUR PR DESCRIPTION
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="7">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Write a real <span class="coral">description and title</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              At a high level, what changed and WHY (Jira ticket helps here)
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Avoid paragraphs of text - bullet point your changes
+            </li>
+            <li class="anim-fade-up stagger-4">
+              Any visual change requires a screenshot or video
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 8 — PR TITLE BAD VS GOOD (two-col screenshot)
+         ==================================================================== -->
+      <section class="slide slide--two-col" data-slide="8">
+        <div class="two-col-grid">
+          <div class="two-col-item anim-img stagger-2">
+            <div
+              class="col-label col-label--bad"
+              style="font-family: &quot;Departure Mono&quot;, monospace"
+            >
+              Don't do this
+            </div>
+            <img
+              src="./images/pr-title-bad-screenshot.png"
+              alt="Bad PR title example"
+            />
+          </div>
+          <div class="two-col-item anim-img stagger-4">
+            <div
+              class="col-label col-label--good"
+              style="font-family: &quot;Departure Mono&quot;, monospace"
+            >
+              Do this
+            </div>
+            <img
+              src="./images/pr-title-good-screenshot.png"
+              alt="Good PR title example"
+            />
+          </div>
+        </div>
+        <p class="two-col-caption anim-fade-up stagger-5">
+          PR title = future commit message. Make it clear enough to find in a
+          git history 6 months from now - this helps with debugging and also
+          finding code.
+        </p>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 9 — MANAGING REVIEWERS
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="9">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Assign the right <span class="coral">reviewer</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              Use Merge Advisories in GitHub to identify who to assign - don't
+              guess
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Always use the Reviewers field, never Assignees (Databricks
+              standard)
+            </li>
+            <li class="anim-fade-up stagger-4">
+              Pick one primary reviewer, if it requires more than two it's too
+              big
+            </li>
+            <li class="anim-fade-up stagger-5">
+              SLA is 1 business day. Do not ping before that.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 10 — MERGE ADVISORIES (screenshot)
+         ==================================================================== -->
+      <section class="slide slide--screenshot" data-slide="10">
+        <div class="screenshot-label anim-fade-up stagger-1">
+          Merge Advisories tell you
+          <span class="coral">exactly who to assign.</span>
+        </div>
+        <div class="screenshot-wrap anim-img stagger-3">
+          <img
+            src="./images/merge-advisories.png"
+            alt="Merge Requirements / OWNERS table"
+          />
+        </div>
+        <p class="screenshot-caption anim-fade-up stagger-5">
+          Go to the Checks tab, find the Merge Advisories bot comment. It lists
+          valid approvers per path.
+        </p>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 11 — SHEPHERDING YOUR PR
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="11">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Your PR isn't done until <span class="coral">its merged</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              After pushing new commits, re-request reviews
+               <img src="./images/re-request.png" alt="Re-request" style="height: 1.4em; vertical-align: middle; margin-left: 6px; border-radius: 2px;" />
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Resolve comments yourself when obvious, let the reviewer resolve otherwise
+            </li>
+            <li class="anim-fade-up stagger-4">
+              Respond to feedback constructively - ask clarifying questions
+            </li>
+            <li class="anim-fade-up stagger-5">
+              <a href="https://databricks.atlassian.net/wiki/spaces/UN/pages/3699179747/EDITOR+howto+Handle+a+failed+PR+check" target="_blank" rel="noopener">Handle failed checks</a> before triggering merges</a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 15 — BEING A GOOD REVIEWER
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="12">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Reviewing is a <span class="coral">two-way street</span>
+          </h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">
+              Respond within 1 business day
+            </li>
+            <li class="anim-fade-up stagger-3">
+              Nits shouldn't be blockers, use
+              <code
+                style="
+                  font-family: &quot;SF Mono&quot;, monospace;
+                  font-size: var(--fs-code);
+                  background: var(--navy-10);
+                  padding: 2px 6px;
+                  border-radius: 3px;
+                "
+                >nit:</code
+              >
+              prefix, then approve anyway
+            </li>
+            <li class="anim-fade-up stagger-4">
+              When you do block, be constructive and specific about why
+            </li>
+            <li class="anim-fade-up stagger-5">
+              Start a review before writing comments (batches all feedback into
+              one notification)
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 16 — OWN YOUR DIFF (big statement)
+         ==================================================================== -->
+      <section
+        class="slide"
+        data-slide="13"
+        style="
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: var(--pad-slide) clamp(80px, 10vw, 180px);
+          position: relative;
+        "
+      >
+        <div class="anim-cascade">
+          <div class="headline-block">
+            <span class="hed-line" style="font-size: clamp(36px, 5.5vw, 80px); line-height: 1.1"
+              ><span class="pop">YOU</span> are still accountable</span
+            >
+          </div>
+          <div class="headline-block" style="padding-bottom: 0.60em">
+            <span class="hed-line" style="font-size: clamp(36px, 5.5vw, 80px); line-height: 1.1"
+              >for AI-generated code</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 14 — QUOTE: SINGLE USE PLASTIC CODE
+         ==================================================================== -->
+      <section class="slide slide--split" data-slide="14">
+        <div class="left-block anim-slide-left">
+          <div class="left-top">
+            <div class="left-rule"></div>
+            <div class="left-block-label">Remember</div>
+          </div>
+          <div class="vertical-word" aria-hidden="true">
+            Think &middot; Build &middot; Own
+          </div>
+          <div class="left-bottom">
+            <div class="year-stamp">&ldquo;&rdquo;</div>
+          </div>
+        </div>
+        <div class="right-panel">
+          <div class="anim-cascade">
+            <div class="headline-block">
+              <span
+                class="quote-text hed-line"
+                style="font-size: clamp(30px, 4.5vw, 74px)"
+                >We've moved into</span
+              >
+            </div>
+            <div class="headline-block">
+              <span
+                class="quote-text hed-line"
+                style="font-size: clamp(30px, 4.5vw, 74px)"
+                >the era of <span class="coral">single use plastic code</span></span
+              >
+            </div>
+            
+          </div>
+          <!-- <div class="quote-attr anim-fade-up stagger-5" style="font-family: 'Departure Mono', monospace; font-weight: 400;">
+            — An enginee
+          </div> -->
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 15 — QUOTE: COST OF A FEATURE
+         ==================================================================== -->
+      <section class="slide slide--split" data-slide="15">
+        <div class="left-block anim-slide-left">
+          <div class="left-top">
+            <div class="left-rule"></div>
+            <div class="left-block-label">Remember</div>
+          </div>
+          <div class="vertical-word" aria-hidden="true">
+            Cost &middot; Scope &middot; Future
+          </div>
+          <div class="left-bottom">
+            <div class="year-stamp">&ldquo;&rdquo;</div>
+          </div>
+        </div>
+        <div class="right-panel">
+          <div class="anim-cascade">
+            <div class="headline-block">
+              <span
+                class="quote-text hed-line"
+                style="font-size: clamp(30px, 4.5vw, 74px)"
+                >The cost of a feature isn't just the time to code it.</span
+              >
+            </div>
+            <!-- <div class="headline-block">
+              <span
+                class="quote-text hed-line"
+                style="font-size: clamp(30px, 4.5vw, 74px)"
+                >isn't just the time to code it.</span
+              >
+            </div> -->
+            <div class="headline-block" style="padding-top: 2em">
+              <span
+                class="quote-text hed-line"
+                style="font-size: clamp(30px, 4.5vw, 74px)"
+                ><span class="coral">It's an obstacle to future expansion.</span></span
+              >
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+         SLIDE 16 — RESOURCES
+         ==================================================================== -->
+      <section class="slide slide--content" data-slide="16">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">
+            Quick <span class="coral">links</span>
+          </h2>
+          <div class="resource-grid">
+            <div class="resource-card anim-fade-up stagger-2">
+              <strong><a href="https://databricks.atlassian.net/wiki/spaces/UN/pages/2009924716/Pull-request+review+process" target="_blank" rel="noopener">go/code-review</a></strong>
+              <span>Databricks PR policy</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-3">
+              <strong><a href="https://databricks.atlassian.net/wiki/spaces/KB/pages/2497970395/Use+Small+PRs+go+smallpr" target="_blank" rel="noopener">go/smallpr</a></strong>
+              <span>Why small PRs matter</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-4">
+              <strong><a href="https://devportal.prod.databricks-corp.com/prs/submitted/me" target="_blank" rel="noopener">go/devportal</a></strong>
+              <span>Track your PRs and reviewer queues</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-5">
+              <strong><a href="https://databricks.atlassian.net/wiki/spaces/UN/pages/2888335724/Stacked+PRs" target="_blank" rel="noopener">go/stacked-prs</a></strong>
+              <span>Stacked PR workflow</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-6">
+              <strong><a href="https://who-owns-it-data-app-2548836972759138.18.azure.databricksapps.com/?__theme=light" target="_blank" rel="noopener">go/whoownsit</a></strong>
+              <span>Find owning team for a file or check</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-7">
+              <strong><a href="https://databricks.atlassian.net/wiki/spaces/UN/pages/38971075/Your+First+Pull+Request" target="_blank" rel="noopener">go/first-pr</a></strong>
+              <span>Walkthrough to open your first PR</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      /* ========================================================================
+       INTERSECTION OBSERVER — Animate on scroll
+       ======================================================================== */
+      const animEls = document.querySelectorAll(
+        ".anim-fade-up, .anim-cascade, .anim-slide-left, .anim-img, .rule-thin",
+      );
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+            }
+          });
+        },
+        { threshold: 0.15 },
+      );
+
+      animEls.forEach((el) => observer.observe(el));
+
+      /* ========================================================================
+       NAV DOTS
+       ======================================================================== */
+      const navDots = document.getElementById("nav-dots");
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement("button");
+        dot.classList.add("nav-dot");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => {
+          slides[i].scrollIntoView({ behavior: "smooth" });
+        });
+        navDots.appendChild(dot);
+      }
+
+      const dots = document.querySelectorAll(".nav-dot");
+
+      /* ========================================================================
+       SCROLL TRACKING — Progress bar, counter, active dot
+       ======================================================================== */
+      const progressBar = document.getElementById("progress-bar");
+      const slideCounter = document.getElementById("slide-counter");
+
+      const slideObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const idx = Array.from(slides).indexOf(entry.target);
+              // Update progress
+              const pct = ((idx + 1) / totalSlides) * 100;
+              progressBar.style.width = pct + "%";
+              // Update counter
+              slideCounter.textContent = `${idx + 1} / ${totalSlides}`;
+              // Update dots
+              dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+
+      slides.forEach((s) => slideObserver.observe(s));
+
+      /* ========================================================================
+       KEYBOARD NAVIGATION
+       ======================================================================== */
+      let currentSlide = 0;
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === " " || e.key === "ArrowRight") {
+          e.preventDefault();
+          if (currentSlide < totalSlides - 1) {
+            currentSlide++;
+            slides[currentSlide].scrollIntoView({ behavior: "smooth" });
+          }
+        } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          if (currentSlide > 0) {
+            currentSlide--;
+            slides[currentSlide].scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      });
+
+      // Keep currentSlide in sync with scroll
+      const syncObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              currentSlide = Array.from(slides).indexOf(entry.target);
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+
+      slides.forEach((s) => syncObserver.observe(s));
+
+      /* ========================================================================
+       NAV BUTTONS (up/down)
+       ======================================================================== */
+      document.getElementById("nav-up").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentSlide > 0) {
+          currentSlide--;
+          slides[currentSlide].scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      });
+
+      document.getElementById("nav-down").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentSlide < totalSlides - 1) {
+          currentSlide++;
+          slides[currentSlide].scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
