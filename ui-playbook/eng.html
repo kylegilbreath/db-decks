@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UI Contribution Playbook — Engineers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @font-face {
+        font-family: "Test Soehne";
+        src: url("https://kylegilbreath.github.io/db-decks/dont-break-prod/fonts/test-soehne-buch.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Test Soehne";
+        src: url("https://kylegilbreath.github.io/db-decks/dont-break-prod/fonts/test-soehne-kraftig.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Departure Mono";
+        src: url("https://kylegilbreath.github.io/db-decks/dont-break-prod/fonts/DepartureMono-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+        --cream: #fcfcfc;
+        --navy: #242526;
+        --coral: #e14d3f;
+        --navy-10: rgba(13, 27, 42, 0.1);
+        --navy-15: rgba(13, 27, 42, 0.15);
+        --navy-30: rgba(13, 27, 42, 0.3);
+        --navy-45: rgba(66, 70, 74, 0.656);
+        --navy-65: rgba(13, 27, 42, 0.65);
+        --cream-50: rgba(250, 247, 242, 0.5);
+        --cream-20: rgba(250, 247, 242, 0.2);
+        --cream-15: rgba(250, 247, 242, 0.15);
+        --cream-45: rgba(250, 247, 242, 0.45);
+
+        --fs-hed-xl: clamp(64px, 9vw, 140px);
+        --fs-hed-lg: clamp(48px, 7vw, 110px);
+        --fs-section: clamp(2.1rem, 3.6vw, 3.1rem);
+        --fs-body: clamp(1.5rem, 2.2vw, 1.9rem);
+        --fs-body-sm: clamp(0.9rem, 1.5vw, 1.2rem);
+        --fs-label: clamp(0.75rem, 1vw, 0.9rem);
+        --fs-chip: clamp(9px, 0.65vw, 10px);
+        --fs-subtitle: clamp(13px, 1.1vw, 17px);
+        --fs-punchy: clamp(16px, 1.5vw, 22px);
+
+        --pad-slide: clamp(40px, 5vw, 72px);
+        --pad-slide-x: clamp(44px, 5.5vw, 80px);
+        --pad-left: clamp(28px, 3vw, 44px);
+        --pad-left-y: clamp(32px, 4vh, 56px);
+        --left-w: clamp(220px, 28vw, 400px);
+        --left-narrow: clamp(60px, 8vw, 100px);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        overflow-x: hidden;
+      }
+
+      body {
+        width: 100%;
+        background: var(--cream);
+        font-family: "Test Soehne", sans-serif;
+        color: var(--navy);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      a {
+        color: var(--coral);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color 0.2s ease;
+      }
+      a:hover { color: var(--navy); }
+
+      #progress-bar {
+        position: fixed; top: 0; left: 0; width: 0%; height: 3px;
+        background: var(--coral); z-index: 1000; transition: width 0.3s ease;
+      }
+
+      #nav-dots {
+        position: fixed; right: clamp(12px, 1.5vw, 20px); top: 50%;
+        transform: translateY(-50%); display: flex; flex-direction: column;
+        align-items: flex-end; gap: 14px; z-index: 1000;
+      }
+      .nav-dot {
+        width: 14px; height: 1.5px; border-radius: 0;
+        background: var(--navy-15); border: none; cursor: pointer; padding: 0;
+        transition: background 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out;
+      }
+      .nav-dot:hover { width: 22px; background: var(--navy-30); }
+      .nav-dot.active { background: var(--coral); width: 18px; height: 3px; }
+      .nav-dot.active:hover { width: 24px; background: var(--coral); }
+
+      .nav-arrow {
+        background: none; border: none; cursor: pointer;
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px);
+        color: var(--navy-30); padding: 2px 4px;
+        transition: transform 0.2s ease, color 0.2s ease;
+      }
+      .nav-arrow:hover { transform: translateY(-2px); color: var(--navy-45); }
+      .nav-arrow:active { transform: translateY(1px); }
+
+      #slide-counter {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px);
+        font-weight: 500; color: var(--navy-30);
+        letter-spacing: 0.05em; text-transform: uppercase;
+      }
+
+      /* ── Slide base ── */
+      .slide {
+        width: 100%; height: 100vh; height: 100dvh;
+        overflow: hidden; scroll-snap-align: start;
+        position: relative; background: var(--cream);
+      }
+
+      /* ── Split layout ── */
+      .slide--split {
+        display: grid;
+        grid-template-columns: var(--left-w) 1fr;
+      }
+      .left-block {
+        background: var(--navy); display: flex; flex-direction: column;
+        align-items: flex-start; justify-content: space-between;
+        padding: var(--pad-left-y) var(--pad-left); position: relative; overflow: hidden;
+      }
+      .left-block::before {
+        content: ""; position: absolute; inset: 0;
+        background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 12px);
+        pointer-events: none;
+      }
+      .left-block::after {
+        content: ""; position: absolute; bottom: 0; left: 0; width: 100%;
+        height: clamp(180px, 28vh, 300px); background: var(--coral);
+        clip-path: polygon(0 40%, 100% 0%, 100% 100%, 0% 100%); z-index: 0;
+      }
+      .left-block--coral::after { height: clamp(260px, 45vh, 500px); }
+      .left-top { position: relative; z-index: 1; }
+      .left-rule { width: clamp(24px, 3vw, 40px); height: 3px; background: var(--coral); margin-bottom: 14px; }
+      .left-label {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.85vw, 13px); font-weight: 400;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--cream-50); line-height: 1.6;
+      }
+      .left-label strong { display: block; color: var(--cream); font-size: clamp(13px, 1vw, 15px); }
+      .left-block-label {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.85vw, 13px); font-weight: 400;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        color: var(--cream-50); position: relative; z-index: 1;
+      }
+      .vertical-word {
+        position: absolute; right: clamp(16px, 2vw, 28px); top: 50%;
+        transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl;
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(9px, 0.7vw, 11px); font-weight: 700;
+        letter-spacing: 0.25em; text-transform: none;
+        color: var(--cream-20); z-index: 1;
+      }
+      .left-bottom { position: relative; z-index: 1; }
+      .year-stamp {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(48px, 6vw, 88px); font-weight: 700;
+        letter-spacing: -0.04em; color: var(--cream-15); line-height: 1;
+      }
+      .org-tag {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(10px, 0.75vw, 12px); font-weight: 400;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--cream-45); margin-top: 6px;
+      }
+      .right-panel {
+        display: flex; flex-direction: column; justify-content: center;
+        padding: var(--pad-slide) var(--pad-slide-x); position: relative;
+      }
+
+      /* ── Content layout (narrow accent bar) ── */
+      .slide--content { display: grid; grid-template-columns: var(--left-narrow) 1fr; }
+      .accent-bar { background: var(--navy); position: relative; overflow: hidden; }
+      .accent-bar::before {
+        content: ""; position: absolute; inset: 0;
+        background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 12px);
+        pointer-events: none;
+      }
+      .accent-bar::after {
+        content: ""; position: absolute; bottom: 0; left: 0; width: 100%;
+        height: clamp(80px, 14vh, 140px); background: var(--coral);
+        clip-path: polygon(0 40%, 100% 0%, 100% 100%, 0% 100%);
+      }
+      .content-panel {
+        display: flex; flex-direction: column; justify-content: center;
+        padding: clamp(60px, 8vh, 100px) clamp(48px, 6vw, 96px);
+        max-height: 100vh; max-height: 100dvh; overflow: hidden;
+      }
+      .content-heading {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-section); font-weight: 700;
+        letter-spacing: -0.01em; color: var(--navy);
+        margin-bottom: clamp(16px, 2.5vh, 32px);
+      }
+      .content-heading .coral { color: var(--coral); }
+
+      /* ── Lists ── */
+      .content-list {
+        list-style: none; display: flex; flex-direction: column;
+        gap: clamp(12px, 2vh, 20px);
+      }
+      .content-list li {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body); font-weight: 400;
+        color: var(--navy); line-height: 1.45;
+        padding-left: clamp(16px, 2vw, 24px); position: relative;
+      }
+      .content-list li::before {
+        content: ""; position: absolute; left: 0; top: 0.65em;
+        width: 6px; height: 6px; background: var(--coral); border-radius: 1px;
+      }
+      .content-list li .sub {
+        display: block; font-size: var(--fs-body-sm);
+        color: var(--navy-65); margin-top: 4px;
+      }
+
+      /* ── Type ── */
+      .headline-block { overflow: hidden; }
+      .hed-line {
+        display: block; font-family: "Test Soehne", sans-serif;
+        font-weight: 700; letter-spacing: -0.02em;
+        line-height: 0.9; color: var(--navy);
+      }
+      .hed-line .pop { color: var(--coral); }
+      .hed-line--xl { font-size: var(--fs-hed-xl); }
+      .hed-line--lg { font-size: var(--fs-hed-lg); }
+
+      .statement-sub {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body); font-weight: 400;
+        color: var(--navy-65); line-height: 1.5;
+        margin-top: clamp(16px, 2.5vh, 28px); max-width: 550px;
+      }
+
+      .badge-orange {
+        display: inline-block;
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-label); font-weight: 700;
+        color: var(--cream); background: var(--coral);
+        padding: clamp(4px, 0.5vh, 6px) clamp(10px, 1vw, 16px);
+        border-radius: 3px; margin-top: clamp(12px, 1.5vh, 20px);
+      }
+
+      .rule-thin {
+        width: 100%; height: 1.5px; background: var(--navy);
+        margin: clamp(16px, 2.5vh, 28px) 0; transform: scaleX(0);
+        transform-origin: left; transition: transform 0.55s ease;
+      }
+      .rule-thin.is-visible { transform: scaleX(1); }
+
+      .footer-note {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(13px, 0.85vw, 14px); font-weight: 400;
+        letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy-30);
+      }
+
+      .resource-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr);
+        gap: clamp(12px, 1.5vw, 20px); max-width: 820px;
+      }
+      .resource-card {
+        border: 1.5px solid var(--navy-15);
+        border-radius: clamp(6px, 0.5vw, 10px);
+        padding: clamp(14px, 2vh, 22px) clamp(14px, 1.5vw, 20px);
+        background: var(--cream);
+      }
+      .resource-card strong {
+        display: block; font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1rem, 1.4vw, 1.2rem); font-weight: 700;
+        color: var(--navy); margin-bottom: 4px;
+      }
+      .resource-card span {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm); font-weight: 400;
+        color: var(--navy-65); line-height: 1.4;
+      }
+
+      .closing-text {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1.1rem, 2vw, 1.6rem); font-weight: 700;
+        color: var(--navy); line-height: 1.55; max-width: 520px;
+      }
+      .closing-footer {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-label); font-weight: 400;
+        color: var(--navy-45); margin-top: clamp(24px, 3vh, 40px);
+      }
+
+      /* ── Path map table (slide 3) ── */
+      .path-table {
+        width: 100%;
+        max-width: 820px;
+        border-collapse: collapse;
+        margin-top: clamp(20px, 3vh, 36px);
+      }
+      .path-table th {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(9px, 0.75vw, 11px); font-weight: 400;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--navy-45); text-align: left;
+        padding-bottom: clamp(8px, 1vh, 12px);
+        border-bottom: 1.5px solid var(--navy-15);
+      }
+      .path-table td {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm); font-weight: 400;
+        color: var(--navy); line-height: 1.4;
+        padding: clamp(10px, 1.5vh, 16px) 0;
+        border-bottom: 1px solid var(--navy-10);
+        vertical-align: top;
+      }
+      .path-table td:first-child {
+        font-weight: 700;
+        padding-right: clamp(24px, 3vw, 48px);
+        white-space: nowrap;
+      }
+      .path-table td:not(:first-child) {
+        padding-right: clamp(16px, 2vw, 32px);
+        color: var(--navy-65);
+      }
+      .path-table td .your-job {
+        font-family: "Test Soehne", sans-serif;
+        font-weight: 700; color: var(--navy);
+      }
+      .path-table tr:last-child td { border-bottom: none; }
+
+      /* ── Two-job cards (slide 4) ── */
+      .two-job-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(16px, 2vw, 28px);
+        max-width: 820px;
+        margin-top: clamp(20px, 3vh, 36px);
+      }
+      .job-card {
+        padding: clamp(20px, 2.5vh, 32px) clamp(20px, 2vw, 28px);
+        border: 1.5px solid var(--navy-15);
+        border-radius: 4px;
+      }
+      .job-card--new { border-color: var(--coral); }
+      .job-card-eyebrow {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(9px, 0.75vw, 11px); font-weight: 400;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--navy-45); margin-bottom: clamp(8px, 1vh, 12px);
+      }
+      .job-card--new .job-card-eyebrow { color: var(--coral); }
+      .job-card-title {
+        font-family: "Test Soehne", sans-serif;
+        font-size: clamp(1.2rem, 1.8vw, 1.6rem); font-weight: 700;
+        color: var(--navy); line-height: 1.2;
+        margin-bottom: clamp(8px, 1vh, 14px);
+      }
+      .job-card-body {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm); font-weight: 400;
+        color: var(--navy-65); line-height: 1.5;
+      }
+
+      /* ── Handshake table (slide 5) ── */
+      .handshake-table {
+        width: 100%; max-width: 820px;
+        border-collapse: collapse;
+        margin-top: clamp(16px, 2.5vh, 28px);
+      }
+      .handshake-table th {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(9px, 0.75vw, 11px); font-weight: 400;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--navy-45); text-align: left;
+        padding-bottom: clamp(6px, 1vh, 10px);
+        border-bottom: 1.5px solid var(--navy-15);
+      }
+      .handshake-table td {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm); font-weight: 400;
+        color: var(--navy-65); line-height: 1.4;
+        padding: clamp(8px, 1.2vh, 13px) 0;
+        border-bottom: 1px solid var(--navy-10);
+        vertical-align: top;
+      }
+      .handshake-table td:first-child {
+        padding-right: clamp(20px, 2.5vw, 40px);
+        color: var(--navy); font-weight: 400;
+      }
+      .handshake-table td:last-child {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.9vw, 13px); font-weight: 400;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--coral); white-space: nowrap;
+        padding-left: clamp(8px, 1vw, 16px);
+        vertical-align: middle;
+      }
+      .handshake-table tr:last-child td { border-bottom: none; }
+
+      .handshake-meta {
+        display: flex; gap: clamp(24px, 4vw, 56px);
+        margin-top: clamp(16px, 2.5vh, 28px);
+        max-width: 820px;
+      }
+      .handshake-meta-block { flex: 1; }
+      .handshake-meta-label {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(9px, 0.75vw, 11px); font-weight: 400;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--navy-45); margin-bottom: clamp(4px, 0.6vh, 8px);
+      }
+      .handshake-meta-body {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body-sm); font-weight: 400;
+        color: var(--navy-65); line-height: 1.5;
+      }
+      .handshake-meta-body strong { color: var(--navy); font-weight: 700; }
+
+      /* ── Escalation flow (slide 7) ── */
+      .escalation-flow {
+        display: flex; flex-direction: column;
+        gap: clamp(4px, 0.8vh, 8px);
+        margin-top: clamp(20px, 3vh, 32px);
+        max-width: 680px;
+      }
+      .flow-step {
+        display: flex; align-items: flex-start;
+        gap: clamp(12px, 1.5vw, 20px);
+      }
+      .flow-step-num {
+        font-family: "Departure Mono", monospace;
+        font-size: clamp(11px, 0.85vw, 13px); font-weight: 400;
+        color: var(--coral); letter-spacing: 0.08em;
+        flex-shrink: 0; padding-top: 0.15em; min-width: 24px;
+      }
+      .flow-step-text {
+        font-family: "Test Soehne", sans-serif;
+        font-size: var(--fs-body); font-weight: 400;
+        color: var(--navy); line-height: 1.4;
+      }
+      .flow-step-text .sub {
+        display: block; font-size: var(--fs-body-sm);
+        color: var(--navy-65); margin-top: 2px;
+      }
+      .flow-connector {
+        width: 1px; height: clamp(8px, 1.2vh, 14px);
+        background: var(--navy-15);
+        margin-left: calc(clamp(12px, 1.5vw, 20px) + 12px);
+      }
+
+      /* ── Animations ── */
+      .anim-cascade .hed-line {
+        transform: translateY(110%); opacity: 0;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .anim-cascade.is-visible .hed-line:nth-child(1) { transform: translateY(0); opacity: 1; transition-delay: 0.15s; }
+      .anim-cascade.is-visible .hed-line:nth-child(2) { transform: translateY(0); opacity: 1; transition-delay: 0.28s; }
+      .anim-cascade.is-visible .hed-line:nth-child(3) { transform: translateY(0); opacity: 1; transition-delay: 0.41s; }
+
+      .anim-slide-left {
+        transform: translateX(-100%);
+        transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .anim-slide-left.is-visible { transform: translateX(0); }
+
+      .anim-fade-up {
+        opacity: 0; transform: translateY(16px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .anim-fade-up.is-visible { opacity: 1; transform: translateY(0); }
+
+      .stagger-1 { transition-delay: 0.1s; }
+      .stagger-2 { transition-delay: 0.2s; }
+      .stagger-3 { transition-delay: 0.3s; }
+      .stagger-4 { transition-delay: 0.4s; }
+      .stagger-5 { transition-delay: 0.5s; }
+      .stagger-6 { transition-delay: 0.6s; }
+      .stagger-7 { transition-delay: 0.7s; }
+      .stagger-8 { transition-delay: 0.8s; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .anim-cascade .hed-line, .anim-fade-up, .anim-slide-left {
+          transform: none !important; transition: opacity 0.3s ease !important;
+        }
+        .anim-cascade .hed-line { opacity: 0; }
+        .anim-cascade.is-visible .hed-line { opacity: 1; }
+        .rule-thin { transform: scaleX(1) !important; opacity: 0; transition: opacity 0.3s ease !important; }
+        .rule-thin.is-visible { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="progress-bar" role="presentation"></div>
+    <nav id="nav-dots" aria-label="Slide navigation"></nav>
+    <div id="slide-nav" style="position:fixed;bottom:clamp(16px,2vh,28px);right:clamp(16px,2vw,28px);z-index:1000;display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <button id="nav-up" class="nav-arrow" aria-label="Previous slide">&#9650;</button>
+      <div id="slide-counter" aria-live="polite">1 / 9</div>
+      <button id="nav-down" class="nav-arrow" aria-label="Next slide">&#9660;</button>
+    </div>
+
+    <main>
+
+      <!-- ================================================================
+           SLIDE 1 — HOOK
+           ================================================================ -->
+      <section class="slide" data-slide="1"
+        style="display:flex;flex-direction:column;justify-content:center;padding:var(--pad-slide) clamp(80px,10vw,180px);position:relative;">
+        <div class="anim-cascade">
+          <div class="headline-block" style="padding-bottom:0.95em">
+            <span class="hed-line" style="font-size:clamp(44px,6.5vw,104px);line-height:1.05;">UI papercuts are a <span class="pop">tax.</span></span>
+          </div>
+        </div>
+        <div class="anim-fade-up stagger-5">
+          <span style="font-family:'Test Soehne',sans-serif;font-size:var(--fs-body);font-weight:400;color:var(--navy-65);line-height:1.5;max-width:580px;display:block;">This is how we stop paying it.</span>
+        </div>
+        <div style="position:absolute;bottom:clamp(28px,3.5vh,44px);left:clamp(80px,10vw,180px);right:clamp(80px,10vw,180px);display:flex;align-items:center;justify-content:space-between;" class="anim-fade-up stagger-8">
+          <span class="footer-note">Databricks Design &middot; 2026</span>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 2 — THE PROBLEM
+           ================================================================ -->
+      <section class="slide slide--content" data-slide="2">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">The <span class="coral">current state</span></h2>
+          <ul class="content-list">
+            <li class="anim-fade-up stagger-2">Figma specs die in implementation.</li>
+            <li class="anim-fade-up stagger-3">UI issues ship because no one owns the design review.</li>
+            <li class="anim-fade-up stagger-4">Non-engineer PRs create review burden with no clear process.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 3 — THE SOLUTION
+           ================================================================ -->
+      <section class="slide" data-slide="3"
+        style="display:flex;flex-direction:column;justify-content:center;padding:var(--pad-slide) clamp(80px,10vw,180px);position:relative;">
+        <div class="anim-cascade">
+          <div class="headline-block" style="padding-bottom:0.95em">
+            <span class="hed-line" style="font-size:clamp(56px,8.4vw,132px);margin-left:-0.04em;">Here's what <span class="pop">we're trying.</span></span>
+          </div>
+        </div>
+        <p class="statement-sub anim-fade-up stagger-5" style="max-width:620px;">A system that lets non-engineers engage, prototype, and create using plans and living specs — while holding engineers accountable for design, too.</p>
+        <div class="two-job-grid anim-fade-up stagger-6" style="margin-top:clamp(24px,3.5vh,44px);max-width:640px;">
+          <div class="job-card">
+            <div class="job-card-eyebrow">Non-engineers</div>
+            <div class="job-card-body">Provide a functional spec — a code PoC or a plan.md.</div>
+          </div>
+          <div class="job-card job-card--new">
+            <div class="job-card-eyebrow">Engineers</div>
+            <div class="job-card-body">Provide technical stability and design accountability.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 4 — THE SYSTEM (path map)
+           ================================================================ -->
+      <section class="slide slide--content" data-slide="4">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">The <span class="coral">four paths</span></h2>
+          <table class="path-table anim-fade-up stagger-2" style="margin-bottom:clamp(16px,2.5vh,28px);">
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Best for</th>
+                <th>Your job</th>
+                <th>Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="anim-fade-up stagger-3">
+                <td>Direct Fix</td>
+                <td>Nits, text, CSS</td>
+                <td><span class="your-job">Safety review, fast merge</span></td>
+                <td>Production</td>
+              </tr>
+              <tr class="anim-fade-up stagger-4">
+                <td>Plan-Build</td>
+                <td>New features</td>
+                <td><span class="your-job">Sign off plan.md first</span></td>
+                <td>Production</td>
+              </tr>
+              <tr class="anim-fade-up stagger-5">
+                <td>Vibe POC</td>
+                <td>Research, "what if?"</td>
+                <td><span class="your-job">Review behavior, not code</span></td>
+                <td>Living spec → rebuild</td>
+              </tr>
+              <tr class="anim-fade-up stagger-6">
+                <td>Figma</td>
+                <td>High-fidelity UI</td>
+                <td><span class="your-job">Tag designer, pixel-perfect impl</span></td>
+                <td>Production</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="anim-fade-up stagger-7" style="max-width:820px;padding-left:14px;position:relative;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--coral);border-radius:2px;"></div>
+            <p style="font-family:'Test Soehne',sans-serif;font-size:var(--fs-body-sm);font-weight:400;color:var(--navy-65);line-height:1.55;">You'll interact with all four. Your role changes depending on which path the non-engineer chose.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 5 — WHAT THIS MEANS FOR YOU
+           ================================================================ -->
+      <section class="slide slide--content" data-slide="5">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">Two <span class="coral">jobs</span></h2>
+          <div class="two-job-grid">
+            <div class="job-card anim-fade-up stagger-2">
+              <div class="job-card-eyebrow">You already do this</div>
+              <div class="job-card-title">Technical stability</div>
+              <div class="job-card-body">Code quality. CI. Architecture review. Catching regressions before merge.</div>
+            </div>
+            <div class="job-card job-card--new anim-fade-up stagger-3">
+              <div class="job-card-eyebrow">This is the new ask</div>
+              <div class="job-card-title">Design accountability</div>
+              <div class="job-card-body">You're often the last person who sees the UI before it ships. If something looks wrong, say something.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 6 — THE HANDSHAKE
+           ================================================================ -->
+      <section class="slide slide--content" data-slide="6">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">When to <span class="coral">loop in a designer</span></h2>
+          <table class="handshake-table anim-fade-up stagger-2">
+            <thead>
+              <tr>
+                <th>Trigger</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="anim-fade-up stagger-3">
+                <td>Touches a core user flow (auth, nav, data creation/deletion)</td>
+                <td>Tag designer in PR</td>
+              </tr>
+              <tr class="anim-fade-up stagger-4">
+                <td>Introduces a new UI pattern</td>
+                <td>Tag designer in PR</td>
+              </tr>
+              <tr class="anim-fade-up stagger-5">
+                <td>Change spans more than one surface or component</td>
+                <td>Tag designer in PR</td>
+              </tr>
+              <tr class="anim-fade-up stagger-6">
+                <td>Spec feels ambiguous or missing</td>
+                <td>Slack designer before building</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="anim-fade-up stagger-7" style="margin-top:clamp(16px,2.5vh,28px);max-width:820px;padding-left:14px;position:relative;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--coral);border-radius:2px;"></div>
+            <p style="font-family:'Test Soehne',sans-serif;font-size:var(--fs-body-sm);font-weight:400;color:var(--navy-65);line-height:1.55;">The goal isn't more process. It's catching the right things early instead of fixing them after merge.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 7 — PR STANDARDS
+           ================================================================ -->
+      <section class="slide" data-slide="7"
+        style="display:flex;flex-direction:column;justify-content:center;padding:var(--pad-slide) clamp(80px,10vw,180px);position:relative;">
+        <div class="anim-cascade">
+          <div class="headline-block" style="padding-bottom:0.95em">
+            <span class="hed-line hed-line--lg">Before you <span class="pop">merge.</span></span>
+          </div>
+        </div>
+        <ul class="content-list anim-fade-up stagger-5" style="margin-top:clamp(20px,3vh,36px);max-width:620px;">
+          <li>No UI PR without a visual receipt — screenshot or screen recording, no exceptions.</li>
+          <li style="margin-top:clamp(8px,1.5vh,16px);">If you notice something off in the UI, say something. Even a comment counts.</li>
+        </ul>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 8 — THE ASK
+           ================================================================ -->
+      <section class="slide slide--split" data-slide="8">
+        <div class="left-block left-block--coral anim-slide-left">
+          <div class="left-top">
+            <div class="left-rule"></div>
+            <div class="left-label">
+              <strong>Databricks Design</strong>
+              UI Contribution Playbook
+            </div>
+          </div>
+          <div class="vertical-word" aria-hidden="true">Two things</div>
+          <div class="left-bottom">
+            <div class="year-stamp">26</div>
+            <div class="org-tag">Engineers</div>
+          </div>
+        </div>
+        <div class="right-panel">
+          <div class="anim-cascade">
+            <div class="headline-block">
+              <span class="hed-line hed-line--lg">You're the last</span>
+            </div>
+            <div class="headline-block" style="padding-bottom:0.95em">
+              <span class="hed-line hed-line--lg">line of <span class="pop">defense.</span></span>
+            </div>
+          </div>
+          <div class="rule-thin anim-fade-up" style="transition-delay:0.4s;"></div>
+          <ul class="content-list anim-fade-up stagger-5" style="max-width:500px;">
+            <li>Tag a designer when a PR touches a core flow. They won't see it otherwise.</li>
+            <li>If something looks off, say it. You don't need to know the fix.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           SLIDE 9 — QUESTIONS / RESOURCES
+           ================================================================ -->
+      <section class="slide slide--content" data-slide="9">
+        <div class="accent-bar anim-slide-left"></div>
+        <div class="content-panel">
+          <h2 class="content-heading anim-fade-up stagger-1">Questions &amp; <span class="coral">resources</span></h2>
+          <div class="resource-grid anim-fade-up stagger-2" style="margin-top:clamp(16px,2.5vh,32px);">
+            <div class="resource-card anim-fade-up stagger-3">
+              <strong><a href="https://docs.google.com/document/d/1TGcIcPaCLC0WNd6V3hvu7OgxHFCHjOrWzZ6btTNaidw/edit" target="_blank" rel="noopener">UI Contribution Playbook</a></strong>
+              <span>The full proposal — philosophy, four paths, PR standards, and SOP</span>
+            </div>
+            <div class="resource-card anim-fade-up stagger-4">
+              <strong><a href="https://docs.google.com/document/d/1MWFPhDHDHvmh3MaUIe2zHxWHbSXv6Y8Zswc5g7-mIAE/edit?tab=t.0#heading=h.ou34so54pnek" target="_blank" rel="noopener">Example plan.md</a></strong>
+              <span>A real Plan-Build example — what a good plan looks like before coding begins</span>
+            </div>
+          </div>
+          <div class="anim-fade-up stagger-6" style="margin-top:clamp(24px,4vh,48px);">
+            <p style="font-family:'Test Soehne',sans-serif;font-size:var(--fs-body-sm);font-weight:400;color:var(--navy-45);line-height:1.5;">Questions? Michelle Liu &middot; Kyle Gilbreath</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <script>
+      const animEls = document.querySelectorAll(".anim-fade-up, .anim-cascade, .anim-slide-left, .rule-thin");
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add("is-visible"); });
+      }, { threshold: 0.15 });
+      animEls.forEach((el) => observer.observe(el));
+
+      const navDots = document.getElementById("nav-dots");
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement("button");
+        dot.classList.add("nav-dot");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => slides[i].scrollIntoView({ behavior: "smooth" }));
+        navDots.appendChild(dot);
+      }
+      const dots = document.querySelectorAll(".nav-dot");
+
+      const progressBar = document.getElementById("progress-bar");
+      const slideCounter = document.getElementById("slide-counter");
+      const slideObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = Array.from(slides).indexOf(entry.target);
+            progressBar.style.width = ((idx + 1) / totalSlides) * 100 + "%";
+            slideCounter.textContent = `${idx + 1} / ${totalSlides}`;
+            dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+          }
+        });
+      }, { threshold: 0.5 });
+      slides.forEach((s) => slideObserver.observe(s));
+
+      let currentSlide = 0;
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === " " || e.key === "ArrowRight") {
+          e.preventDefault();
+          if (currentSlide < totalSlides - 1) { currentSlide++; slides[currentSlide].scrollIntoView({ behavior: "smooth" }); }
+        } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          if (currentSlide > 0) { currentSlide--; slides[currentSlide].scrollIntoView({ behavior: "smooth" }); }
+        }
+      });
+      const syncObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => { if (entry.isIntersecting) currentSlide = Array.from(slides).indexOf(entry.target); });
+      }, { threshold: 0.5 });
+      slides.forEach((s) => syncObserver.observe(s));
+
+      document.getElementById("nav-up").addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (currentSlide > 0) { currentSlide--; slides[currentSlide].scrollIntoView({ behavior: "smooth", block: "start" }); }
+      });
+      document.getElementById("nav-down").addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (currentSlide < totalSlides - 1) { currentSlide++; slides[currentSlide].scrollIntoView({ behavior: "smooth", block: "start" }); }
+      });
+    </script>
+  </body>
+</html>
